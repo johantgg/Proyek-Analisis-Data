@@ -9,9 +9,25 @@ st.write("Dashboard ini menyajikan analisis data peminjaman sepeda berdasarkan m
 
 @st.cache_data
 def load_data():
-    file_path = os.path.join("Data", "day.csv")  
-    df = pd.read_csv(file_path)
-    return df
+    try:
+        # Get the current script's directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up one level to the project root
+        project_root = os.path.dirname(current_dir)
+        # Construct the full path to the data file
+        file_path = os.path.join(project_root, "data", "day.csv")
+        # Add this line after file_path is defined to debug
+        st.write(f"Looking for file at: {file_path}")
+        
+        if not os.path.exists(file_path):
+            st.error(f"Data file not found at: {file_path}")
+            return None
+            
+        df = pd.read_csv(file_path)
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return None
 
 df = load_data()
 
