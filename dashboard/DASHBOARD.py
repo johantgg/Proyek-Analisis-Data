@@ -12,11 +12,8 @@ def load_data():
     try:
         # Get the current script's directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Go up one level to the project root
         project_root = os.path.dirname(current_dir)
-        # Construct the full path to the data file
         file_path = os.path.join(project_root, "data", "day.csv")
-        # Add this line after file_path is defined to debug
         st.write(f"Looking for file at: {file_path}")
         
         if not os.path.exists(file_path):
@@ -41,7 +38,6 @@ df['season_label'] = df['season'].map(season_options)
 st.subheader("Pilih Musim")
 selected_seasons = []
 
-# Checkbox untuk memilih musim
 all_seasons = st.checkbox("All Seasons", value=True)
 spring = st.checkbox("Spring", value=True)
 summer = st.checkbox("Summer", value=True)
@@ -73,7 +69,6 @@ plt.ylabel('Jumlah Penyewaan Sepeda')
 plt.title('Distribusi Penyewaan Sepeda Berdasarkan Musim')
 st.pyplot(fig)
 
-# Fitur interaktif: Filter berdasarkan Rentang Suhu
 min_temp, max_temp = st.slider("Pilih Rentang Suhu:", float(df['temp'].min()), float(df['temp'].max()), (float(df['temp'].min()), float(df['temp'].max())))
 filtered_df_temp = df[(df['temp'] >= min_temp) & (df['temp'] <= max_temp)]
 
@@ -85,33 +80,57 @@ plt.ylabel('Jumlah Peminjaman Sepeda')
 plt.title('Pengaruh Suhu terhadap Jumlah Peminjaman Sepeda')
 st.pyplot(fig)
 
-# Menentukan suhu saat jumlah peminjaman sepeda mencapai puncaknya
 max_rental_temp = df.loc[df['cnt'].idxmax(), 'temp']
 st.write(f"Jumlah peminjaman sepeda mencapai puncaknya pada suhu: {max_rental_temp}")
 
-# Analisis RFM
-st.subheader("Analisis RFM untuk Peminjaman Sepeda")
-df['date'] = pd.to_datetime(df['dteday'])
-latest_date = df['date'].max()
-rfm_df = df.groupby('instant').agg({
-    'date': lambda x: (latest_date - x.max()).days,
-    'instant': 'count',
-    'cnt': 'sum'
-}).rename(columns={'date': 'Recency', 'instant': 'Frequency', 'cnt': 'Monetary'})
+# Pengelompokan Manual: Berdasarkan Jumlah Peminjaman Sepeda
+def group_rental_usage(cnt):
+    if cnt < 2000:
+        return 'Low Usage'
+    elif 2000 <= cnt < 4000:
+        return 'Medium Usage'
+    else:
+        return 'High Usage'
 
-st.write("Hasil Analisis RFM:")
-st.write(rfm_df.head())
+df['rental_group'] = df['cnt'].apply(group_rental_usage)
 
-# Fitur interaktif untuk memilih jenis distribusi RFM
-rfm_metric = st.selectbox("Pilih Metode Distribusi RFM:", ['Recency', 'Frequency', 'Monetary'])
-fig, ax = plt.subplots(figsize=(8,5))
-sns.histplot(rfm_df[rfm_metric], bins=20, kde=True, ax=ax)
-plt.xlabel(rfm_metric)
-plt.ylabel('Frekuensi')
-plt.title(f'Distribusi {rfm_metric} Peminjaman Sepeda')
+st.subheader("Distribusi Penggunaan Sepeda (Manual Grouping)")
+rental_group_counts = df['rental_group'].value_counts().reset_index()
+rental_group_counts.columns = ['Group', 'Count']
+
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(x='Group', y='Count', data=rental_group_counts, palette='pastel', ax=ax)
+plt.xlabel('Kelompok Penggunaan')
+plt.ylabel('Jumlah Hari')
+plt.title('Distribusi Penggunaan Sepeda Berdasarkan Kelompok')
 st.pyplot(fig)
 
-# Fitur interaktif: Rata-rata Penyewaan Sepeda per Hari dalam Seminggu
+# Pengelompokan Manual: Berdasarkan Suhu
+def group_temperature(temp):
+    if temp < 0.3:
+        return 'Cool'
+    elif 0.3 <= temp < 0.6:
+        return 'Moderate'
+    else:
+        return 'Hot'
+
+df['temperature_group'] = df['temp'].apply(group_temperature)
+
+st.subheader("Distribusi Berdasarkan Suhu")
+temp_group_counts = df['temperature_group'].value_counts().reset_index()
+temp_group_counts.columns = ['Temperature Group', 'Count']
+
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(x='Temperature Group', y='Count', data=temp_group_counts, palette='cool', ax=ax)
+plt.xlabel('Kelompok Suhu')
+plt.ylabel('Jumlah Hari')
+plt.title('Distribusi Hari Berdasarkan Suhu Udara')
+st.pyplot(fig)
+
+st.subheader("Insight Tambahan")
+st.write("1. Mayoritas hari berada dalam kategori **Moderate** suhu, yang menunjukkan bahwa suhu sedang lebih mendominasi.")
+st.write("2. Penggunaan sepeda didominasi oleh kelompok **Medium Usage**, yang berarti peminjaman sepeda tidak terlalu ekstrem.")
+
 day_labels = {0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'}
 df['weekday_label'] = df['weekday'].map(day_labels)
 
@@ -131,4 +150,3 @@ st.subheader("Insight")
 st.write("1. Peminjaman sepeda tertinggi terjadi pada musim Fall, sedangkan Spring memiliki jumlah penyewaan terendah.")
 st.write("2. Terdapat korelasi positif antara suhu dan jumlah peminjaman sepeda, artinya semakin hangat suhu, semakin banyak peminjam.")
 st.write("3. Hari kerja cenderung memiliki jumlah peminjam yang lebih tinggi dibandingkan akhir pekan.")
-st.write("4. Analisis RFM menunjukkan sebaran pengguna berdasarkan seberapa sering dan baru mereka menyewa sepeda.")
