@@ -10,9 +10,13 @@ st.write("Dashboard ini menyajikan analisis data peminjaman sepeda berdasarkan m
 @st.cache_data
 def load_data():
     try:
+        # Get the current script's directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up one level to the project root
         project_root = os.path.dirname(current_dir)
+        # Construct the full path to the data file
         file_path = os.path.join(project_root, "data", "day.csv")
+        # Add this line after file_path is defined to debug
         st.write(f"Looking for file at: {file_path}")
         
         if not os.path.exists(file_path):
@@ -85,34 +89,46 @@ st.pyplot(fig)
 max_rental_temp = df.loc[df['cnt'].idxmax(), 'temp']
 st.write(f"Jumlah peminjaman sepeda mencapai puncaknya pada suhu: {max_rental_temp}")
 
-# Analisis Manual Grouping: Kategori Waktu Pagi, Siang, Sore, Malam
-def categorize_time(hour):
-    if 6 <= hour < 12:
-        return 'Pagi'
-    elif 12 <= hour < 18:
-        return 'Siang'
-    elif 18 <= hour < 24:
-        return 'Sore'
-    else:
-        return 'Malam'
+# Analisis RFM
+st.subheader("Analisis RFM untuk Peminjaman Sepeda")
+df['date'] = pd.to_datetime(df['dteday'])
+latest_date = df['date'].max()
+rfm_df = df.groupby('instant').agg({
+    'date': lambda x: (latest_date - x.max()).days,
+    'instant': 'count',
+    'cnt': 'sum'
+}).rename(columns={'date': 'Recency', 'instant': 'Frequency', 'cnt': 'Monetary'})
 
-df['Time_Category'] = df['hr'].apply(categorize_time)
+st.write("Hasil Analisis RFM:")
+st.write(rfm_df.head())
 
-st.subheader("Analisis Manual Grouping Berdasarkan Kategori Waktu")
-selected_time_category = st.multiselect("Pilih Kategori Waktu:", ['Pagi', 'Siang', 'Sore', 'Malam'], default=['Pagi', 'Siang', 'Sore', 'Malam'])
-filtered_df_time = df[df['Time_Category'].isin(selected_time_category)]
+# Fitur interaktif untuk memilih jenis distribusi RFM
+rfm_metric = st.selectbox("Pilih Metode Distribusi RFM:", ['Recency', 'Frequency', 'Monetary'])
+fig, ax = plt.subplots(figsize=(8,5))
+sns.histplot(rfm_df[rfm_metric], bins=20, kde=True, ax=ax)
+plt.xlabel(rfm_metric)
+plt.ylabel('Frekuensi')
+plt.title(f'Distribusi {rfm_metric} Peminjaman Sepeda')
+st.pyplot(fig)
 
-time_grouping = filtered_df_time.groupby('Time_Category')['cnt'].sum().reset_index()
+# Fitur interaktif: Rata-rata Penyewaan Sepeda per Hari dalam Seminggu
+day_labels = {0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'}
+df['weekday_label'] = df['weekday'].map(day_labels)
 
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x='Time_Category', y='cnt', data=time_grouping, palette='coolwarm', ax=ax)
-plt.xlabel('Kategori Waktu (Pagi, Siang, Sore, Malam)')
-plt.ylabel('Total Peminjaman Sepeda')
-plt.title('Distribusi Peminjaman Sepeda Berdasarkan Kategori Waktu')
+day_avg = df.groupby('weekday_label')['cnt'].mean().reset_index()
+st.subheader("Rata-rata Penyewaan Sepeda per Hari dalam Seminggu")
+selected_days = st.multiselect("Pilih Hari:", day_labels.values(), default=list(day_labels.values()))
+filtered_day_avg = day_avg[day_avg['weekday_label'].isin(selected_days)]
+
+fig, ax = plt.subplots(figsize=(8,5))
+sns.barplot(x='weekday_label', y='cnt', data=filtered_day_avg, palette='coolwarm', ax=ax)
+plt.xlabel('Hari')
+plt.ylabel('Rata-rata Penyewaan')
+plt.title('Rata-rata Penyewaan Sepeda per Hari dalam Seminggu')
 st.pyplot(fig)
 
 st.subheader("Insight")
 st.write("1. Peminjaman sepeda tertinggi terjadi pada musim Fall, sedangkan Spring memiliki jumlah penyewaan terendah.")
 st.write("2. Terdapat korelasi positif antara suhu dan jumlah peminjaman sepeda, artinya semakin hangat suhu, semakin banyak peminjam.")
 st.write("3. Hari kerja cenderung memiliki jumlah peminjam yang lebih tinggi dibandingkan akhir pekan.")
-st.write("4. Peminjaman sepeda berdasarkan kategori waktu menunjukkan waktu Siang dan Sore memiliki jumlah peminjam yang signifikan.")
+st.write("4. Analisis RFM menunjukkan sebaran pengguna berdasarkan seberapa sering dan baru mereka menyewa sepeda.")
