@@ -142,11 +142,12 @@ temp_group_counts = filtered_df_temp_group['temperature_group'].value_counts().r
 temp_group_counts.columns = ['Temperature Group', 'Count']
 
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x='Temperature Group', y='Count', data=temp_group_counts, palette='cool', ax=ax)
-plt.xlabel('Kelompok Suhu')
-plt.ylabel('Jumlah Hari')
-plt.title('Distribusi Hari Berdasarkan Suhu Udara')
+colors = ['#76C1FA', '#FFD966', '#F85C50']  # Warna untuk tiap kategori suhu
+ax.pie(temp_group_counts['Count'], labels=temp_group_counts['Temperature Group'], autopct='%1.1f%%', startangle=140, colors=colors)
+plt.title('Distribusi Hari Berdasarkan Kelompok Suhu')
+plt.axis('equal')  # Membuat pie chart berbentuk bulat
 st.pyplot(fig)
+
 
 st.subheader("Insight")
 st.write("1. Peminjaman sepeda tertinggi terjadi pada musim Fall, sedangkan Spring memiliki jumlah penyewaan terendah.")
