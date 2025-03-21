@@ -92,11 +92,12 @@ selected_days = st.multiselect("Pilih Hari:", day_labels.values(), default=list(
 filtered_day_avg = day_avg[day_avg['weekday_label'].isin(selected_days)]
 
 fig, ax = plt.subplots(figsize=(8,5))
-sns.barplot(x='weekday_label', y='cnt', data=filtered_day_avg, palette='coolwarm', ax=ax)
+sns.barplot(x='weekday_label', y='cnt', data=filtered_day_avg, palette='Blues', ax=ax)
 plt.xlabel('Hari')
 plt.ylabel('Rata-rata Penyewaan')
 plt.title('Rata-rata Penyewaan Sepeda per Hari dalam Seminggu')
 st.pyplot(fig)
+
 
 # Pengelompokan Manual: Berdasarkan Jumlah Peminjaman Sepeda
 def group_rental_usage(cnt):
@@ -116,11 +117,12 @@ rental_group_counts = filtered_df_rental['rental_group'].value_counts().reset_in
 rental_group_counts.columns = ['Group', 'Count']
 
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x='Group', y='Count', data=rental_group_counts, palette='pastel', ax=ax)
+sns.barplot(x='Group', y='Count', data=rental_group_counts, color='lightblue', ax=ax)
 plt.xlabel('Kelompok Penggunaan')
 plt.ylabel('Jumlah Hari')
 plt.title('Distribusi Penggunaan Sepeda Berdasarkan Kelompok')
 st.pyplot(fig)
+
 
 # Pengelompokan Manual: Berdasarkan Suhu
 def group_temperature(temp):
@@ -146,11 +148,11 @@ plt.ylabel('Jumlah Hari')
 plt.title('Distribusi Hari Berdasarkan Suhu Udara')
 st.pyplot(fig)
 
-st.subheader("Insight Tambahan")
-st.write("1. Mayoritas hari berada dalam kategori **Moderate** suhu, yang menunjukkan bahwa suhu sedang lebih mendominasi.")
-st.write("2. Penggunaan sepeda didominasi oleh kelompok **Medium Usage**, yang berarti peminjaman sepeda tidak terlalu ekstrem.")
-
 st.subheader("Insight")
 st.write("1. Peminjaman sepeda tertinggi terjadi pada musim Fall, sedangkan Spring memiliki jumlah penyewaan terendah.")
 st.write("2. Terdapat korelasi positif antara suhu dan jumlah peminjaman sepeda, artinya semakin hangat suhu, semakin banyak peminjam.")
 st.write("3. Hari kerja cenderung memiliki jumlah peminjam yang lebih tinggi dibandingkan akhir pekan.")
+
+st.subheader("Insight Tambahan")
+st.write("1. Mayoritas hari berada dalam kategori **Moderate** suhu, yang menunjukkan bahwa suhu sedang lebih mendominasi.")
+st.write("2. Penggunaan sepeda didominasi oleh kelompok **Medium Usage**, yang berarti peminjaman sepeda tidak terlalu ekstrem.")
