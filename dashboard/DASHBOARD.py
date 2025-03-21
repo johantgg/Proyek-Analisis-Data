@@ -83,6 +83,21 @@ st.pyplot(fig)
 max_rental_temp = df.loc[df['cnt'].idxmax(), 'temp']
 st.write(f"Jumlah peminjaman sepeda mencapai puncaknya pada suhu: {max_rental_temp}")
 
+day_labels = {0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'}
+df['weekday_label'] = df['weekday'].map(day_labels)
+
+day_avg = df.groupby('weekday_label')['cnt'].mean().reset_index()
+st.subheader("Rata-rata Penyewaan Sepeda per Hari dalam Seminggu")
+selected_days = st.multiselect("Pilih Hari:", day_labels.values(), default=list(day_labels.values()))
+filtered_day_avg = day_avg[day_avg['weekday_label'].isin(selected_days)]
+
+fig, ax = plt.subplots(figsize=(8,5))
+sns.barplot(x='weekday_label', y='cnt', data=filtered_day_avg, palette='coolwarm', ax=ax)
+plt.xlabel('Hari')
+plt.ylabel('Rata-rata Penyewaan')
+plt.title('Rata-rata Penyewaan Sepeda per Hari dalam Seminggu')
+st.pyplot(fig)
+
 # Pengelompokan Manual: Berdasarkan Jumlah Peminjaman Sepeda
 def group_rental_usage(cnt):
     if cnt < 2000:
@@ -95,7 +110,9 @@ def group_rental_usage(cnt):
 df['rental_group'] = df['cnt'].apply(group_rental_usage)
 
 st.subheader("Distribusi Penggunaan Sepeda (Manual Grouping)")
-rental_group_counts = df['rental_group'].value_counts().reset_index()
+selected_rental_groups = st.multiselect("Pilih Kelompok Penggunaan:", ['Low Usage', 'Medium Usage', 'High Usage'], default=['Low Usage', 'Medium Usage', 'High Usage'])
+filtered_df_rental = df[df['rental_group'].isin(selected_rental_groups)]
+rental_group_counts = filtered_df_rental['rental_group'].value_counts().reset_index()
 rental_group_counts.columns = ['Group', 'Count']
 
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -117,7 +134,9 @@ def group_temperature(temp):
 df['temperature_group'] = df['temp'].apply(group_temperature)
 
 st.subheader("Distribusi Berdasarkan Suhu")
-temp_group_counts = df['temperature_group'].value_counts().reset_index()
+selected_temp_groups = st.multiselect("Pilih Kelompok Suhu:", ['Cool', 'Moderate', 'Hot'], default=['Cool', 'Moderate', 'Hot'])
+filtered_df_temp_group = df[df['temperature_group'].isin(selected_temp_groups)]
+temp_group_counts = filtered_df_temp_group['temperature_group'].value_counts().reset_index()
 temp_group_counts.columns = ['Temperature Group', 'Count']
 
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -130,21 +149,6 @@ st.pyplot(fig)
 st.subheader("Insight Tambahan")
 st.write("1. Mayoritas hari berada dalam kategori **Moderate** suhu, yang menunjukkan bahwa suhu sedang lebih mendominasi.")
 st.write("2. Penggunaan sepeda didominasi oleh kelompok **Medium Usage**, yang berarti peminjaman sepeda tidak terlalu ekstrem.")
-
-day_labels = {0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'}
-df['weekday_label'] = df['weekday'].map(day_labels)
-
-day_avg = df.groupby('weekday_label')['cnt'].mean().reset_index()
-st.subheader("Rata-rata Penyewaan Sepeda per Hari dalam Seminggu")
-selected_days = st.multiselect("Pilih Hari:", day_labels.values(), default=list(day_labels.values()))
-filtered_day_avg = day_avg[day_avg['weekday_label'].isin(selected_days)]
-
-fig, ax = plt.subplots(figsize=(8,5))
-sns.barplot(x='weekday_label', y='cnt', data=filtered_day_avg, palette='coolwarm', ax=ax)
-plt.xlabel('Hari')
-plt.ylabel('Rata-rata Penyewaan')
-plt.title('Rata-rata Penyewaan Sepeda per Hari dalam Seminggu')
-st.pyplot(fig)
 
 st.subheader("Insight")
 st.write("1. Peminjaman sepeda tertinggi terjadi pada musim Fall, sedangkan Spring memiliki jumlah penyewaan terendah.")
